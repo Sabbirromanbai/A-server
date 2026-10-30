@@ -1,8 +1,43 @@
+import { ObjectId } from "mongodb";
 import {
   createEvent,
+  getEventById,
   getUpcomingEvents,
   validateEvent,
 } from "./event.model.js";
+
+export async function getEvent(req, res) {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid event ID.",
+    });
+  }
+
+  try {
+    const event = await getEventById(new ObjectId(id));
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Event not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      event,
+    });
+  } catch (error) {
+    console.error("Failed to fetch event:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch event.",
+    });
+  }
+}
 
 export async function getEvents(req, res) {
   try {
@@ -48,3 +83,4 @@ export async function postEvent(req, res) {
     });
   }
 }
+

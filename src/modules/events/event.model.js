@@ -60,3 +60,7 @@ export async function getUpcomingEvents() {
     .sort({ eventDate: 1 })
     .toArray();
 }
+
+export async function getEventById(id) {
+  return getDb().collection("events").findOne({ _id: id });
+}
