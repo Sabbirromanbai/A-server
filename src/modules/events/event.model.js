@@ -94,6 +94,14 @@ export async function getUpcomingEvents() {
     .toArray();
 }
 
+export async function getEventsByCreatorEmail(email) {
+  return getDb()
+    .collection("events")
+    .find({ creatorEmail: email })
+    .sort({ eventDate: 1 })
+    .toArray();
+}
+
 export async function getEventById(id) {
   return getDb().collection("events").findOne({ _id: id });
 }

@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import {
   createEvent,
   deleteEvent,
+  getEventsByCreatorEmail,
   getEventById,
   getUpcomingEvents,
   updateEvent,
@@ -132,6 +133,32 @@ export async function getEvents(req, res) {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch events.",
+    });
+  }
+}
+
+export async function getMyEvents(req, res) {
+  const { email } = req.query;
+
+  if (typeof email !== "string" || !email.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: "A non-empty email query parameter is required.",
+    });
+  }
+
+  try {
+    const events = await getEventsByCreatorEmail(email.trim());
+
+    return res.status(200).json({
+      success: true,
+      events,
+    });
+  } catch (error) {
+    console.error("Failed to fetch creator events:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch creator events.",
     });
   }
 }
