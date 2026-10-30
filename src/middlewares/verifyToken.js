@@ -64,6 +64,13 @@ export async function verifyToken(req, res, next) {
     });
   }
 
+  if (typeof payload.email !== "string" || !payload.email.trim()) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized.",
+    });
+  }
+
   req.user = payload;
   return next();
 }

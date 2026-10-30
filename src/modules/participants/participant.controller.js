@@ -2,21 +2,8 @@ import { ObjectId } from "mongodb";
 import { createParticipant, getJoinedEvents } from "./participant.model.js";
 
 export async function getParticipants(req, res) {
-  const email = req.query.email;
-
-  if (
-    typeof email !== "string" ||
-    !email.trim() ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-  ) {
-    return res.status(400).json({
-      success: false,
-      message: "A valid email query parameter is required.",
-    });
-  }
-
   try {
-    const events = await getJoinedEvents(email.trim().toLowerCase());
+    const events = await getJoinedEvents(req.user.email);
 
     return res.status(200).json({
       success: true,
@@ -32,25 +19,23 @@ export async function getParticipants(req, res) {
 }
 
 export async function postParticipant(req, res) {
-  const { eventId, userEmail } = req.body ?? {};
+  const { eventId } = req.body ?? {};
 
   if (
     typeof eventId !== "string" ||
     !/^[0-9a-fA-F]{24}$/.test(eventId) ||
-    !ObjectId.isValid(eventId) ||
-    typeof userEmail !== "string" ||
-    !userEmail.trim()
+    !ObjectId.isValid(eventId)
   ) {
     return res.status(400).json({
       success: false,
-      message: "A valid eventId and non-empty userEmail are required.",
+      message: "A valid eventId is required.",
     });
   }
 
   try {
     const participant = await createParticipant(
       new ObjectId(eventId),
-      userEmail.trim().toLowerCase(),
+      req.user.email
     );
 
     if (!participant) {
@@ -74,6 +59,7 @@ export async function postParticipant(req, res) {
     }
 
     console.error("Failed to join event:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to join event.",

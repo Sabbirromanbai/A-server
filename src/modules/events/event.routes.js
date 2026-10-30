@@ -14,10 +14,10 @@ const eventRouter = Router();
 
 // Public routes
 eventRouter.get("/", getEvents);
-eventRouter.get("/:id", getEvent);
 
 // Protected routes
 eventRouter.get("/my-events", verifyToken, getMyEvents);
+eventRouter.get("/:id", getEvent);
 eventRouter.post("/", verifyToken, postEvent);
 eventRouter.put("/:id", verifyToken, putEvent);
 eventRouter.delete("/:id", verifyToken, removeEvent);
