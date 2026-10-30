@@ -7,7 +7,6 @@ const requiredFields = [
   "thumbnailUrl",
   "location",
   "eventDate",
-  "creatorEmail",
 ];
 const updatableFields = [
   "title",
@@ -70,7 +69,7 @@ export function validateEventUpdate(event) {
   return { errors, eventDate };
 }
 
-export async function createEvent(event, eventDate) {
+export async function createEvent(event, eventDate, creatorEmail) {
   const newEvent = {
     title: event.title.trim(),
     description: event.description.trim(),
@@ -78,7 +77,7 @@ export async function createEvent(event, eventDate) {
     thumbnailUrl: event.thumbnailUrl.trim(),
     location: event.location.trim(),
     eventDate,
-    creatorEmail: event.creatorEmail.trim(),
+    creatorEmail,
     createdAt: new Date(),
   };
 
@@ -106,7 +105,7 @@ export async function getEventById(id) {
   return getDb().collection("events").findOne({ _id: id });
 }
 
-export async function updateEvent(id, event, eventDate) {
+export async function updateEvent(id, event, eventDate, creatorEmail) {
   const updatedFields = {
     title: event.title.trim(),
     description: event.description.trim(),
@@ -115,8 +114,13 @@ export async function updateEvent(id, event, eventDate) {
     location: event.location.trim(),
     eventDate,
   };
+
   const events = getDb().collection("events");
-  const result = await events.updateOne({ _id: id }, { $set: updatedFields });
+
+  const result = await events.updateOne(
+    { _id: id, creatorEmail },
+    { $set: updatedFields }
+  );
 
   if (result.matchedCount === 0) {
     return null;
@@ -125,7 +129,10 @@ export async function updateEvent(id, event, eventDate) {
   return events.findOne({ _id: id });
 }
 
-export async function deleteEvent(id) {
-  const result = await getDb().collection("events").deleteOne({ _id: id });
+export async function deleteEvent(id, creatorEmail) {
+  const result = await getDb()
+    .collection("events")
+    .deleteOne({ _id: id, creatorEmail });
+
   return result.deletedCount > 0;
 }
