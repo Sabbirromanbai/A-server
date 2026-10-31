@@ -1,10 +1,10 @@
-# GoodTogether Backend API Documentatio
+# GoodTogether Backend API Documentation
 
 **Base URL:** `http://localhost:5000`
 
 ## 1. Events API
 
-### 1. Create 
+### 1. Create Event
 - **Method:** POST
 - **Endpoint:** `/api/events`
 - **Description:** Create a new event.
