@@ -5,16 +5,36 @@ import {
   getEventsByCreatorEmail,
   getEventById,
   getUpcomingEvents,
+  toEventResponse,
   updateEvent,
   validateEvent,
   validateEventUpdate,
 } from "./event.model.js";
 import { getPublicUserProfiles } from "../users/user.model.js";
 
+const maxEventLimit = 100;
+
+function getRequestedEventLimit(value) {
+  if (value === undefined) {
+    return { limit: undefined };
+  }
+
+  if (typeof value !== "string" || !/^\d+$/.test(value)) {
+    return { error: "limit must be a positive integer." };
+  }
+
+  const requestedLimit = Number(value);
+  if (!Number.isSafeInteger(requestedLimit) || requestedLimit < 1) {
+    return { error: "limit must be a positive integer." };
+  }
+
+  return { limit: Math.min(requestedLimit, maxEventLimit) };
+}
+
 export async function getEvent(req, res) {
   const { id } = req.params;
 
-  if (!ObjectId.isValid(id)) {
+  if (!/^[0-9a-fA-F]{24}$/.test(id) || !ObjectId.isValid(id)) {
     return res.status(400).json({
       success: false,
       message: "Invalid event ID.",
@@ -38,12 +58,11 @@ export async function getEvent(req, res) {
     return res.status(200).json({
       success: true,
       event: {
-        ...event,
+        ...toEventResponse(event),
         organizer: organizer
           ? {
               name: organizer.name,
               image: organizer.image,
-              emailVerified: organizer.emailVerified,
             }
           : null,
       },
@@ -58,8 +77,17 @@ export async function getEvent(req, res) {
 }
 
 export async function getEvents(req, res) {
+  const { limit, error } = getRequestedEventLimit(req.query.limit);
+
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      message: error,
+    });
+  }
+
   try {
-    const events = await getUpcomingEvents();
+    const events = (await getUpcomingEvents(limit)).map(toEventResponse);
 
     return res.status(200).json({
       success: true,
@@ -76,7 +104,9 @@ export async function getEvents(req, res) {
 
 export async function getMyEvents(req, res) {
   try {
-    const events = await getEventsByCreatorEmail(req.user.email);
+    const events = (await getEventsByCreatorEmail(req.user.email)).map(
+      toEventResponse,
+    );
 
     return res.status(200).json({
       success: true,
@@ -108,7 +138,7 @@ export async function postEvent(req, res) {
     return res.status(201).json({
       success: true,
       message: "Event created successfully.",
-      event,
+      event: toEventResponse(event),
     });
   } catch (error) {
     console.error("Failed to create event:", error);
@@ -157,7 +187,7 @@ export async function putEvent(req, res) {
     return res.status(200).json({
       success: true,
       message: "Event updated successfully.",
-      event,
+      event: toEventResponse(event),
     });
   } catch (error) {
     console.error("Failed to update event:", error);

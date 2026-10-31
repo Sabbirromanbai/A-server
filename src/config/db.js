@@ -14,6 +14,11 @@ export async function connectToMongoDB() {
   await client.connect();
   db = client.db();
 
+  await Promise.all([
+    db.collection("events").createIndex({ eventDate: 1 }),
+    db.collection("events").createIndex({ creatorEmail: 1 }),
+  ]);
+
   console.log("You successfully connected to MongoDB!");
   return db;
 }

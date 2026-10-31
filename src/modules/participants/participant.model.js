@@ -1,5 +1,6 @@
 import { getDb } from "../../config/db.js";
 import { getPublicUserProfiles } from "../users/user.model.js";
+import { toEventResponse } from "../events/event.model.js";
 
 let participantIndexPromise;
 
@@ -74,7 +75,7 @@ export async function getJoinedEvents(userEmail) {
     .toArray();
 
   return events.map((event) => ({
-    ...event,
+    ...toEventResponse(event),
     joinedAt: joinedAtByEvent.get(String(event._id)) ?? null,
   }));
 }

@@ -1,6 +1,6 @@
 import { getDb } from "../../config/db.js";
 
-const requiredFields = [
+const eventFields = [
   "title",
   "description",
   "eventType",
@@ -8,31 +8,78 @@ const requiredFields = [
   "location",
   "eventDate",
 ];
-const updatableFields = [
-  "title",
-  "description",
-  "eventType",
-  "thumbnailUrl",
-  "location",
-  "eventDate",
-];
+const eventTypes = new Set([
+  "Donation",
+  "Cleanup",
+  "Plantation",
+  "Winter Relief",
+  "Food Drive",
+  "Health Camp",
+  "Education",
+]);
+const fieldMaxLengths = {
+  title: 120,
+  description: 5000,
+  eventType: 50,
+  thumbnailUrl: 2048,
+  location: 200,
+  eventDate: 64,
+};
 
-export function validateEvent(event) {
+function validateEventData(event) {
   const errors = [];
 
   if (!event || typeof event !== "object" || Array.isArray(event)) {
-    return { errors: ["Request body must be a JSON object."] };
+    return {
+      errors: ["Request body must be a JSON object."],
+      eventDate: undefined,
+    };
   }
 
-  for (const field of requiredFields) {
+  for (const field of Object.keys(event)) {
+    if (!eventFields.includes(field)) {
+      errors.push(`${field} is not allowed.`);
+    }
+  }
+
+  for (const field of eventFields) {
     if (typeof event[field] !== "string" || !event[field].trim()) {
       errors.push(`${field} is required and must be a non-empty string.`);
+      continue;
+    }
+
+    if (event[field].trim().length > fieldMaxLengths[field]) {
+      errors.push(`${field} must be ${fieldMaxLengths[field]} characters or fewer.`);
+    }
+  }
+
+  if (
+    typeof event.eventType === "string" &&
+    event.eventType.trim() &&
+    !eventTypes.has(event.eventType.trim())
+  ) {
+    errors.push("eventType must be a supported event type.");
+  }
+
+  if (typeof event.thumbnailUrl === "string" && event.thumbnailUrl.trim()) {
+    try {
+      const thumbnailUrl = new URL(event.thumbnailUrl.trim());
+      if (
+        !["http:", "https:"].includes(thumbnailUrl.protocol) ||
+        !thumbnailUrl.hostname ||
+        thumbnailUrl.username ||
+        thumbnailUrl.password
+      ) {
+        errors.push("thumbnailUrl must be a valid HTTP or HTTPS URL.");
+      }
+    } catch {
+      errors.push("thumbnailUrl must be a valid HTTP or HTTPS URL.");
     }
   }
 
   let eventDate;
   if (typeof event.eventDate === "string" && event.eventDate.trim()) {
-    eventDate = new Date(event.eventDate);
+    eventDate = new Date(event.eventDate.trim());
 
     if (Number.isNaN(eventDate.getTime())) {
       errors.push("eventDate must be a valid date.");
@@ -44,29 +91,12 @@ export function validateEvent(event) {
   return { errors, eventDate };
 }
 
+export function validateEvent(event) {
+  return validateEventData(event);
+}
+
 export function validateEventUpdate(event) {
-  const errors = [];
-
-  if (!event || typeof event !== "object" || Array.isArray(event)) {
-    return { errors: ["Request body must be a JSON object."] };
-  }
-
-  for (const field of updatableFields) {
-    if (typeof event[field] !== "string" || !event[field].trim()) {
-      errors.push(`${field} is required and must be a non-empty string.`);
-    }
-  }
-
-  const eventDate = new Date(event.eventDate);
-  if (typeof event.eventDate === "string" && event.eventDate.trim()) {
-    if (Number.isNaN(eventDate.getTime())) {
-      errors.push("eventDate must be a valid date.");
-    } else if (eventDate.getTime() <= Date.now()) {
-      errors.push("eventDate must be in the future.");
-    }
-  }
-
-  return { errors, eventDate };
+  return validateEventData(event);
 }
 
 export async function createEvent(event, eventDate, creatorEmail) {
@@ -85,12 +115,22 @@ export async function createEvent(event, eventDate, creatorEmail) {
   return { ...newEvent, _id: result.insertedId };
 }
 
-export async function getUpcomingEvents() {
-  return getDb()
+export function toEventResponse(event) {
+  const { creatorEmail, ...response } = event;
+  return response;
+}
+
+export async function getUpcomingEvents(limit) {
+  const cursor = getDb()
     .collection("events")
     .find({ eventDate: { $gt: new Date() } })
-    .sort({ eventDate: 1 })
-    .toArray();
+    .sort({ eventDate: 1 });
+
+  if (limit !== undefined) {
+    cursor.limit(limit);
+  }
+
+  return cursor.toArray();
 }
 
 export async function getEventsByCreatorEmail(email) {

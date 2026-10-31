@@ -16,7 +16,6 @@ export async function getPublicUserProfiles(emails) {
           email: 1,
           name: 1,
           image: 1,
-          emailVerified: 1,
         },
       },
     )
@@ -26,6 +25,5 @@ export async function getPublicUserProfiles(emails) {
     email: user.email,
     name: typeof user.name === "string" ? user.name : null,
     image: typeof user.image === "string" ? user.image : null,
-    emailVerified: user.emailVerified === true,
   }));
 }

@@ -13,18 +13,21 @@
 {
   "title": "Tree Plantation",
   "description": "Plant trees together",
-  "eventType": "Environment",
-  "thumbnailUrl": "https://example.com/tree.jpg",
+  "eventType": "Plantation",
+  "thumbnailUrl": "https://vibhunirman.com/wp-content/uploads/2025/07/tree.jpg",
   "location": "Chattogram",
-  "eventDate": "2026-11-15",
-  "creatorEmail": "sabbir@example.com"
+  "eventDate": "2026-11-15"
 }
 ```
+- `creatorEmail` is assigned from the authenticated Better Auth JWT and must not be sent by the client.
+- Supported event types: `Donation`, `Cleanup`, `Plantation`, `Winter Relief`, `Food Drive`, `Health Camp`, and `Education`.
+- Maximum lengths: title 120, description 5,000, event type 50, thumbnail URL 2,048, location 200, and event date 64 characters. `thumbnailUrl` must be an HTTP or HTTPS URL and `eventDate` must be in the future.
 
 ### 2. Get All Upcoming Events
 - **Method:** GET
 - **Endpoint:** `/api/events`
 - **Description:** Get all upcoming events, sorted by nearest date first.
+- Optional `limit` query parameter caps results at 100. Use `/api/events?limit=6` for the Home page; without it, all upcoming events are returned.
 
 ### 3. Get Single Event
 - **Method:** GET
@@ -87,7 +90,7 @@
 ### 10. Organizer Profile
 - **Method:** GET
 - **Endpoint:** `/api/events/:id`
-- **Description:** Includes the creator email and public organizer profile (`name`, `image`, `emailVerified`) when the matching Better Auth user exists.
+- **Description:** Includes only the public organizer profile (`name`, `image`) when the matching Better Auth user exists. Creator email and private user fields are never returned.
 
 ---
 
