@@ -26,4 +26,10 @@ export function getDb() {
   return db;
 }
 
+export function getAuthDb() {
+  if (!client) {
+    throw new Error("MongoDB has not been connected.");
+  }
 
+  return client.db(process.env.DB_NAME || "goodtogether");
+}

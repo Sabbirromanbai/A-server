@@ -9,6 +9,7 @@ import {
   validateEvent,
   validateEventUpdate,
 } from "./event.model.js";
+import { getPublicUserProfiles } from "../users/user.model.js";
 
 export async function getEvent(req, res) {
   const { id } = req.params;
@@ -30,9 +31,22 @@ export async function getEvent(req, res) {
       });
     }
 
+    const [organizer] = await getPublicUserProfiles(
+      event.creatorEmail ? [event.creatorEmail] : [],
+    );
+
     return res.status(200).json({
       success: true,
-      event,
+      event: {
+        ...event,
+        organizer: organizer
+          ? {
+              name: organizer.name,
+              image: organizer.image,
+              emailVerified: organizer.emailVerified,
+            }
+          : null,
+      },
     });
   } catch (error) {
     console.error("Failed to fetch event:", error);

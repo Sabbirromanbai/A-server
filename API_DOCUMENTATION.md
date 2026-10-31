@@ -2,7 +2,7 @@
 
 **Base URL:** `http://localhost:5000`
 
-## 1. Events API
+## 1. Events 
 
 ### 1. Create Event
 - **Method:** POST
@@ -49,21 +49,45 @@
 ### 6. Join Event
 - **Method:** POST
 - **Endpoint:** `/api/participants`
-- **Description:** Join a user to an event.
+- **Authentication:** Required (JWT)
+- **Description:** Join the authenticated user to an event. User identity is read from the JWT.
 - **Request Body:**
 ```json
 {
-  "eventId": "EVENT_ID",
-  "userEmail": "sabbir@example.com"
+  "eventId": "EVENT_ID"
 }
 ```
 - **Duplicate Join:** Returns `409 Conflict` if the user already joined.
+- **Success response:** Includes the updated volunteer count and public roster.
 
-### 7. Get Joined Events
+### 7. Leave Event
+- **Method:** DELETE
+- **Endpoint:** `/api/participants`
+- **Authentication:** Required (JWT)
+- **Description:** Remove the authenticated user from an event. User identity is read from the JWT.
+- **Request Body:**
+```json
+{
+  "eventId": "EVENT_ID"
+}
+```
+- **Success response:** Includes the updated volunteer count and public roster.
+
+### 8. Get Joined Events
 - **Method:** GET
-- **Endpoint:** `/api/participants/:email`
-- **Description:** Get all events joined by a specific user.
-- **Status:** Planned (Not implemented yet).
+- **Endpoint:** `/api/participants`
+- **Authentication:** Required (JWT)
+- **Description:** Get events joined by the authenticated user. User identity is read from the JWT.
+
+### 9. Get Event Volunteers
+- **Method:** GET
+- **Endpoint:** `/api/participants/event/:eventId`
+- **Description:** Get an event's confirmed volunteer count and public profile names/images. Volunteer emails are not returned.
+
+### 10. Organizer Profile
+- **Method:** GET
+- **Endpoint:** `/api/events/:id`
+- **Description:** Includes the creator email and public organizer profile (`name`, `image`, `emailVerified`) when the matching Better Auth user exists.
 
 ---
 
@@ -94,6 +118,6 @@
 ## 5. Important Notes
 
 - Base URL will change after backend deployment.
-- Protected routes and Better Auth + JWT security are not implemented yet.
+- Protected participant and event routes require a Better Auth JWT.
 - Do not expose MongoDB credentials or secret keys.
 - Update this documentation whenever a new API is created.
