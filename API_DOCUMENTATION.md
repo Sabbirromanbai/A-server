@@ -2,7 +2,7 @@
 
 **Base URL:** `http://localhost:5000`
 
-## 1. Events 
+## 1. Events API
 
 ### 1. Create Event
 - **Method:** POST
