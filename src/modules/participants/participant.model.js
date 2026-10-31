@@ -49,7 +49,10 @@ export async function getJoinedEvents(userEmail) {
   const db = getDb();
   const participants = await db
     .collection("participants")
-    .find({ userEmail }, { projection: { eventId: 1, _id: 0 } })
+    .find(
+      { userEmail },
+      { projection: { eventId: 1, joinedAt: 1, _id: 0 } },
+    )
     .toArray();
 
   if (participants.length === 0) {
@@ -57,12 +60,23 @@ export async function getJoinedEvents(userEmail) {
   }
 
   const eventIds = participants.map((participant) => participant.eventId);
+  const joinedAtByEvent = new Map(
+    participants.map((participant) => [
+      String(participant.eventId),
+      participant.joinedAt,
+    ]),
+  );
 
-  return db
+  const events = await db
     .collection("events")
     .find({ _id: { $in: eventIds } })
     .sort({ eventDate: 1 })
     .toArray();
+
+  return events.map((event) => ({
+    ...event,
+    joinedAt: joinedAtByEvent.get(String(event._id)) ?? null,
+  }));
 }
 
 export async function getEventParticipants(eventId) {
