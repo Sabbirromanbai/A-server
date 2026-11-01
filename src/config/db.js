@@ -12,7 +12,7 @@ export async function connectToMongoDB() {
 
   client = new MongoClient(uri);
   await client.connect();
-  db = client.db();
+  db = client.db(process.env.DB_NAME?.trim() || "goodtogether");
 
   await Promise.all([
     db.collection("events").createIndex({ eventDate: 1 }),
@@ -32,9 +32,5 @@ export function getDb() {
 }
 
 export function getAuthDb() {
-  if (!client) {
-    throw new Error("MongoDB has not been connected.");
-  }
-
-  return client.db(process.env.DB_NAME || "goodtogether");
+  return getDb();
 }

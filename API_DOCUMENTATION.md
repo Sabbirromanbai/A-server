@@ -1,6 +1,10 @@
 # GoodTogether Backend API Documentation
 
-**Base URL:** `http://localhost:5000`
+**Production base URL:** `https://a-server-eo2d.onrender.com`
+
+Set `NEXT_PUBLIC_API_URL` to this API origin in the frontend deployment. Do not
+append `/api`; the frontend adds the route path itself. For local development,
+the API origin is `http://localhost:5000`.
 
 ## 1. Events API
 
@@ -120,7 +124,26 @@
 
 ## 5. Important Notes
 
-- Base URL will change after backend deployment.
+- The production frontend origin is `https://a-client-beta.vercel.app`.
+- Set `BETTER_AUTH_URL` on both deployments to the frontend origin. The API
+  uses it to fetch the Better Auth JWKS from `/api/auth/jwks` and to verify JWT
+  issuer/audience claims.
+- Set `CLIENT_URL` on the API deployment to the frontend origin so browser
+  requests pass CORS checks. The production frontend origin is also explicitly
+  allowed by the API.
+- Set `NEXT_PUBLIC_BETTER_AUTH_URL` on Vercel to the frontend origin. It may
+  otherwise use the browser's current origin, but an explicit value keeps auth
+  requests consistent.
+- Configure Vercel with `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_BETTER_AUTH_URL`,
+  `BETTER_AUTH_URL`, `MONGODB_URI`, `DB_NAME`, `BETTER_AUTH_SECRET`,
+  `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET`.
+- Configure Render with `MONGODB_URI`, `DB_NAME`, `BETTER_AUTH_URL`, and
+  `CLIENT_URL`. Use the same `DB_NAME` and MongoDB database for Better Auth
+  users and application data.
+- Register `https://a-client-beta.vercel.app/api/auth/callback/google` as the
+  authorized Google OAuth redirect URI.
 - Protected participant and event routes require a Better Auth JWT.
+- The frontend obtains that JWT from Better Auth and sends it as
+  `Authorization: Bearer <token>` to protected API routes.
 - Do not expose MongoDB credentials or secret keys.
 - Update this documentation whenever a new API is created.

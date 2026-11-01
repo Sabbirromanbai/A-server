@@ -5,10 +5,36 @@ import eventRouter from "./modules/events/event.routes.js";
 import participantRouter from "./modules/participants/participant.routes.js";
 
 const app = express();
+const allowedClientOrigins = new Set(["https://a-client-beta.vercel.app"]);
+const configuredClientUrl = process.env.CLIENT_URL?.trim();
+
+if (configuredClientUrl) {
+  let clientUrl;
+  try {
+    clientUrl = new URL(configuredClientUrl);
+  } catch {
+    throw new Error("CLIENT_URL must be an absolute HTTP(S) URL.");
+  }
+
+  if (
+    !["http:", "https:"].includes(clientUrl.protocol) ||
+    (process.env.NODE_ENV === "production" && clientUrl.protocol !== "https:") ||
+    clientUrl.username ||
+    clientUrl.password
+  ) {
+    throw new Error("CLIENT_URL must be an absolute HTTPS URL in production.");
+  }
+
+  allowedClientOrigins.add(clientUrl.origin);
+} else {
+  allowedClientOrigins.add("http://localhost:3000");
+}
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      callback(null, !origin || allowedClientOrigins.has(origin));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

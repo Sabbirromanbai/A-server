@@ -5,13 +5,32 @@ let remoteJwkSet;
 let remoteJwkSetUrl;
 
 function getAuthConfiguration() {
-  const betterAuthUrl = process.env.BETTER_AUTH_URL?.trim();
+  const configuredAuthUrl = process.env.BETTER_AUTH_URL?.trim();
 
-  if (!betterAuthUrl) {
+  if (!configuredAuthUrl) {
     throw new Error("BETTER_AUTH_URL is not configured.");
   }
 
-  const jwksUrl = `${betterAuthUrl.replace(/\/+$/, "")}/api/auth/jwks`;
+  let authUrl;
+  try {
+    authUrl = new URL(configuredAuthUrl);
+  } catch {
+    throw new Error("BETTER_AUTH_URL must be an absolute HTTP(S) URL.");
+  }
+
+  if (
+    !["http:", "https:"].includes(authUrl.protocol) ||
+    (process.env.NODE_ENV === "production" && authUrl.protocol !== "https:") ||
+    authUrl.username ||
+    authUrl.password
+  ) {
+    throw new Error(
+      "BETTER_AUTH_URL must be an absolute HTTPS URL in production.",
+    );
+  }
+
+  const betterAuthUrl = authUrl.origin;
+  const jwksUrl = new URL("/api/auth/jwks", betterAuthUrl).toString();
 
   if (jwksUrl !== remoteJwkSetUrl) {
     remoteJwkSet = createRemoteJWKSet(new URL(jwksUrl));
